@@ -1,2 +1,2 @@
 # WordStats
-A program that gives you the word statistics of a given text file.
+I used ```matplotlib```, ```numpy```, and ```pymsgbox``` to create a convenient text analyzing program.
