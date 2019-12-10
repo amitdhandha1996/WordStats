@@ -1,6 +1,8 @@
 # WordStats
 I used ```matplotlib```, ```numpy```, and ```pymsgbox``` to create a convenient (I hope) text analyzing program.
 
+![Sample Image](https://raw.githubusercontent.com/SeanJxie/WordStats/master/src/image.png)
+
 **So far the program gives:**
 - Total words
 - Unique Words
