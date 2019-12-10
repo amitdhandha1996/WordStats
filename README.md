@@ -8,4 +8,4 @@ Go to the "release" section of this repository, and download the WordStats.zip f
 Simply input the entire path of your chosen text(.txt) file and you're good to go.
 
 # Known Issues
-The definition of a "word" in the program is anything between 2 spaces. Punctuation such as ".", "!", and "?" are stripped from the words. However, it is difficult to determine when apostrophes or brackets should be removed. Working on it.
+The definition of a "word" in the program is anything between 2 spaces. Punctuation such as ".", "!", and "?" are stripped from the words. However, it is difficult to determine when apostrophes or brackets should be removed and we end up with words like "word(anotherword)". Working on it.
