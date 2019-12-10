@@ -11,10 +11,11 @@ PROGRAM_NAME = 'WordStats'
 
 # User input -----
 text = ''
+file_path = ''
 
 
 def user_input():
-    global text
+    global text, file_path
     file_path = pmb.prompt('Enter complete file path below.', PROGRAM_NAME)
 
     try:
@@ -23,14 +24,11 @@ def user_input():
                 text = file.read().replace('\n', '')  # Turn text into string with newlines stripped.
 
         except TypeError:
-            pass  # In this case, the user has exited and the input is NoneType. We exit the program.
+            return 0
 
     except FileNotFoundError:
         pmb.alert(f'"{file_path}" cannot be found on your computer.', 'WordStats | Error: File not found', 'Retry')
         user_input()
-
-
-user_input()  # Get input.
 
 
 # Defining the tools for data analysis. -----
@@ -46,21 +44,43 @@ class StringAnalyzer:
         word_dict = {}
 
         while 1:  # We'll keep iterating until there are no more spaces left (last word).
-            whitespace_idx = self.str.find(' ')
+            target_idx = self.str.find(' ')  # Default target index is ' '.
 
-            word = self.str[0:whitespace_idx]
-            self.str = self.str[whitespace_idx + 1:]
+            word = self.str[0:target_idx]
+            self.str = self.str[target_idx + 1:]
 
-            if word not in word_dict.keys():  # An unrecorded word is encountered.
-                word_dict.update({self.strip_punctuation(word).lower(): 1})  # Add it to the dict with count = 1.
+            if word != '':  # TODO: Don't know what causing this bug. Temporary fix.
+                if word not in word_dict.keys():  # An unrecorded word is encountered.
+                    word_dict.update({self.strip_punctuation(word).lower(): 1})  # Add it to the dict with count = 1.
 
-            else:
-                word_dict[word] += 1  # Word has been encountered before. Count += 1.
+                else:
+                    word_dict[word] += 1  # Word has been encountered before. Count += 1.
 
-            if whitespace_idx == -1:  # Cannot find space. We have reached the last word. Break.
+            if target_idx == -1:  # Cannot find space. We have reached the last word. Break.
                 break
 
         return word_dict
+
+    def get_num_sentences(self):
+        # Brute force.
+        sentance_count = 0
+        sentance_ends = ('.', '?', '!')
+        for char in self.str:
+            if char in sentance_ends:
+                sentance_count += 1
+
+        return sentance_count
+
+    @staticmethod
+    def get_approx_reading_time():
+        # Based off of the 200 words per minute average.
+        value = round(sum(words.values()) / 200, 2)
+        decimal = int(str(value)[2:]) / 100
+
+        minutes = int(str(value)[0])
+        seconds = int(round(decimal * 0.6, 0))
+
+        return minutes, seconds
 
     @staticmethod
     def get_alphabet_dict():
@@ -86,7 +106,7 @@ class StringAnalyzer:
         plt.barh(y_max, quantity, align='center')
         plt.yticks(y_max, word_label)
         plt.xlabel('# of appearances')
-        plt.title('Word Quantity Statistics')
+        plt.title(f'Word Quantity Statistics for "{file_path}"')
 
         plt.ylim(-1, 30)
         plt.show()
@@ -100,14 +120,14 @@ class StringAnalyzer:
         plt.barh(y_max, quantity, align='center')
         plt.yticks(y_max, alphabet_label)
         plt.xlabel('# of appearances')
-        plt.title('First Letter Statistics')
+        plt.title(f'First Letter Statistics for "{file_path}"')
 
         plt.show()
 
     # A static method that removes punctuation "attached" to a word (ex. "word.!.?,!" is considered a word).
     @staticmethod
     def strip_punctuation(word):
-        punctuation = ['.', ',', '?', '!']
+        punctuation = ['.', ',', '?', '!', '"']
         res = ''
         for char in word:
             if char not in punctuation:
@@ -117,39 +137,58 @@ class StringAnalyzer:
 
 
 # Analyse and display data. -----
-analyzed_text = StringAnalyzer(string=text)
+words = dict()
+ab_dict = dict()
 
-words = analyzed_text.get_word_dict()
-ab_dict = analyzed_text.get_alphabet_dict()
-unique_words = len(words.keys())
-total_words = sum(words.values())
 
-# I know this is a lousy way to display text. But, who doesn't like docstrings?
-response = pmb.alert(
-    f"""
-Some facts about your text:
-———————————————————————————
-Total Words: {total_words}
-Unique Words: {unique_words}
-""", PROGRAM_NAME, 'Take me to the graphs (may take some time)')
+def start():
+    global words, ab_dict
 
-if response == 'Take me to the graphs (may take some time)':
-    response = pmb.confirm(
-        """
-Here are a few functions that come with the graph:
-———————————————————————————
-The button at the bottom left corner with 4 arrows pointing in different directions is for easy navigation.
-———————————————————————————
-To move around, click on the button mentioned and drag your mouse around while holding left-click.
-———————————————————————————
-Additionally, you can resize and adjust the scale by right-clicking and dragging your mouse around.
-———————————————————————————
-To save a graph, press the "floppy disk" icon also located at the bottom left corner of the graph.
-———————————————————————————
-        """, PROGRAM_NAME, ['Take me to the word count graph', 'Take me to the alphabet graph'])
+    if user_input() == 0:  # Get input.
+        return None
+
+    analyzed_text = StringAnalyzer(string=text)
+
+    words = analyzed_text.get_word_dict()
+    ab_dict = analyzed_text.get_alphabet_dict()
+
+    unique_words = len(words.keys())
+    total_words = sum(words.values())
+    num_sentences = analyzed_text.get_num_sentences()
+    approx_time = analyzed_text.get_approx_reading_time()
+
+    # I know this is a lousy way to display text. But, who doesn't like docstrings?
+    response = pmb.alert(
+        f"""
+    Some facts about your text:
+    ———————————————————————————
+    Total Words: {total_words}
+    Unique Words: {unique_words}
+    Total Sentences: {num_sentences}
+    Approximate Reading Time: {approx_time[0]} minute(s), {approx_time[1]} second(s)
+    """, PROGRAM_NAME, 'Take me to the graphs (may take some time)')
+
+    if response == 'Take me to the graphs (may take some time)':
+        response = pmb.confirm(
+            """
+    Here are a few functions that come with the graph:
+    ———————————————————————————
+    The button at the bottom left corner with 4 arrows pointing in different directions is for easy navigation.
+    ———————————————————————————
+    To move around, click on the button mentioned and drag your mouse around while holding left-click.
+    ———————————————————————————
+    Additionally, you can resize and adjust the scale by right-clicking and dragging your mouse around.
+    ———————————————————————————
+    To save a graph, press the "floppy disk" icon also located at the bottom left corner of the graph.
+    ———————————————————————————
+            """, PROGRAM_NAME, ['Take me to the word count graph', 'Take me to the alphabet graph'])
 
     if response == 'Take me to the word count graph':
         analyzed_text.plot_word_quantity()
 
     elif response == 'Take me to the alphabet graph':
         analyzed_text.plot_alphabet_quantity()
+
+
+if __name__ == '__main__':
+    start()
