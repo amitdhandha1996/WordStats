@@ -1,5 +1,12 @@
 # WordStats
 I used ```matplotlib```, ```numpy```, and ```pymsgbox``` to create a convenient (I hope) text analyzing program.
+So far the program gives:
+- Total words
+- Unique Words
+- Total sentances
+- Approximate reading time
+- Bar graph of every unique word and the amount of times it has appeared
+- Bar graph of every starting letter of each word and the amount of times the letter has appeared.
 
 # Download
 Go to the "release" section of this repository, and download the WordStats.zip file. Extract all and run WordStats.exe.
